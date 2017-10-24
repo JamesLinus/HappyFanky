@@ -1,0 +1,47 @@
+
+# Makefile for kernel
+BINCLUDE	= -I boot/include
+INCLUDE		= -I include
+Nostack		= -fno-stack-protector
+ENTRY		=   0x501000
+clean :
+	rm -f *.o
+clean_all:
+	rm -f *.o
+	rm -f kernel.img 
+
+boot.o : boot/boot.S
+	gcc -m32  $(BINCLUDE) 	boot/boot.S -c	
+
+
+kernel.img : boot.o kernel/init.c kernel/protect.asm kernel/kernel.c kernel/video.c
+
+	
+	gcc -m32  $(INCLUDE) $(BINCLUDE) kernel/kernel.c -c -fno-stack-protector
+	gcc -m32  $(INCLUDE)	   kernel/init.c -c -fno-stack-protector
+	gcc -m32  $(INCLUDE)	   kernel/video.c -c -fno-stack-protector
+	nasm -f elf  kernel/protect.asm -o protect.o
+	ld -m elf_i386 -Ttext $(ENTRY) boot.o init.o protect.o kernel.o video.o -o kernel.img
+
+copy:
+	sudo kpartx -av a.img
+	sudo mount /dev/mapper/loop0p1 /mnt/img	
+	sudo cp kernel.img /mnt/img
+	sudo umount /mnt/img
+	sudo losetup -d /dev/mapper/loop0p1
+um:
+	
+
+run:	
+		bochs -f b
+
+go:	copy run
+
+
+#gcc -m32 -I boot/include boot/boot.S -c
+#gcc -m32 -I include -I boot/include  kernel/kernel.c -c -fno-stack-protector
+#gcc -m32 -I include   kernel/init.c -c -fno-stack-protector
+#gcc -m32 -I include   kernel/video.c -c -fno-stack-protector
+#nasm -f elf  kernel/protect.asm -o protect.o
+#ld -m elf_i386 boot.o init.o protect.o kernel.o video.o -o kernel.img
+

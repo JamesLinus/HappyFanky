@@ -1,0 +1,87 @@
+
+对于multiboot 的注意事项
+1.项目居然不把实验方法等文档放进来
+2.对于测试代码工作应该每个人都参与，也太伤开发人员的心了，写好代码没人问。完全没有学习开发的环境。
+3.本人新手，经过了很多波折才让虚拟机顺利跑了起来
+4.增加原文档细节处，以及注意事项描述，错误提示解决等。
+
+实验步骤，也为基于这个开发内核做一个准备
+这里的操作主要是在LINUX下：windows下也是可以的，就不提供方法了。
+分为四个步骤 
+一：镜像
+二.安装grub2
+三.编译所需的内核文件
+四。启动
+
+
+华丽分割符
+==========================================
+
+一。镜像
+1.
+方法一：DD工具创建镜像
+	dd if=/dev/zero bs=512 count=20480 of=a.img
+	问题貌似BOCHS识别不了这样镜像，或者是我没能正确设置BOCHS配置文件，总之比较繁琐就放弃了
+*方法二：（需要安装BOCHS，当然还有各种办法比如）
+接着试第二种方法，bochs自带bximage工具
+	 linux输入命令	bximage
+	 提示：一路回车创建了10M的镜像！最后会提供LINUX和 window bochs配置文件
+
+2、使用fdisk对生成的img文件进行分区
+	sudo fdisk a.img
+		m：帮助  a：增加引导标记 n：创建新分区 
+		w：完成操作后记得写入*** p：显示设备列表	
+		3.1 n 创建一个新分区 全部按默认来来大话 （2048-20479）只有一个主分区（前面留出的空间作为引导用）
+		3.2 a 加入引导标记 入下图 启动 *标记
+		3.3 p 看一下是否正确
+		   设备 启动      起点          终点     块数   Id  系统
+		a.img1   *        2048       20159        9056   83  Linux
+		3.4 w 保存 
+3格式化分区mkfs
+	一个镜像文件里可能包含多个分区，所以不能简单 mount -o loop a.img，
+	我们需要把 a.img 里面包含的每个分区映射出来后在一个一个挂载，（因为需要格式化分区！！）
+	所以需要一个工具来读分区表，kpartx 就是这样一个在特定设备上读取分区表并为每个分区创建映射的工具，
+	-a 参数表示加入分区映射；-v 参数表示完成后输出结果：
+
+		3.1将a.img映射至loop设备，并在mapper目录下生成分区设备
+		*sudo kpartx -av a.img
+		(注意提示看看被挂载到哪个设备上了。或者3.2)
+		3.2查看挂载目录，当执行了上面大命令，会在/dev/mapper/目录下生成loop(x)p1类似这样名字的文件
+		   这里/dev/loop(x)p1 被链接到/dev/loop(x).
+		ls -l /de	v/mapper 
+		brw-r--r-- 1 crazy crazy 252,   0  3月 17 22:16 loop0p1
+		接着格式化分区：
+		*sudo mkfs /dev/mapper/loop0p1（根据loop0p1）
+二。安装GRUB
+1 使用mount挂载需要放置grub的分区（还没有卸载loop0p1）
+	 sudo mkdir /mnt/img
+	 sudo mount /dev/mapper/loop0p1 /mnt/img
+2.安装GRUB2 （ubuntu 是这样 ，其他可能是 grub2-install ）
+	*sudo grub-install --no-floppy --boot-directory=/mnt/img /dev/loop0 
+	（注意！这里是/dev/loop0，和前面kpartx映射至的loop设备对应 如：/dev/mapper/loop0p1对应着/dev/loop0）
+	（可能会报一些提示：看到安装完成，如果grub能正常启动就算成功了）
+sudo apt-get install grub2-splashimages /dev/loop0 
+
+三、编译符合multiboot规范的内核
+	编译方法参考，具体查看MAKEFILE
+	注意64位系统 GCC 加上m32
+	      ld-f elf32 指ELF是LINUX程序编译后的格式，目前我们的MULTIBOOT只支持ELF
+		
+	编译不通过：如果ld出现 stack错误 gcc命令请加上-fno-stack-protector,
+	这是GCC高级版本为了修改堆栈溢出问题二加入大补丁，
+	有些版本GCC默认检查堆栈溢出问题，这里将其关闭。
+	（开启也可以吧 -fstack-protectector）
+
+2.将编译好的内核kernel.img文件	拷贝到虚拟镜像中
+	见MAKEFILE
+	
+四、启动内核
+	启动之前确保虚拟机内存设置（内存推荐265M，内存设置过小 提示： out of memory 导致启动不起来的情况）
+	
+	若没有配置grub.cfg文件则：
+	set root=hd0,msdos1	(这里以你实际的情况为准，请输入ls查看你的磁盘设备和相关分区情况)
+	multiboot /kernel.img	
+	boot	
+
+	#题外话，这里可以启动内核大命令配置到./grub/grub.cfg 这样方便很多.
+
