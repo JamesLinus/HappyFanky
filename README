@@ -1,0 +1,37 @@
+
+1.大白话
+大部分代码引用自 <一个操作系统的实现>,这里只是给出一个参考前期代码结构
+当然引用别人的代码自然不好，但是没有办法，技术层面达不到，却被要求尽快完工。请谅解。。
+额外提一点：IDT初始化工作很是繁琐，也很机械化，就偷懒各种复制，整理了一下结构而已
+当然接下去会逐渐改掉引用的代码，暂时借用而已。
+
+//对于分页，还没能理解，目前没有做成。
+//对于引导盘信息和内存信息，使用前参考multiboot规范
+2.流程介绍
+开机 ->grub 加载kernel.img ->运行
+这里所有的代码会被编译成叫做KERNEL.img的文件，至于加载到哪里，参见linker.lds文件，修改一下参数即可。
+因为代码遵从multiboot规范，所以请参考multiboot规范细节。
+
+1。grub 虚拟盘制作方法在 	multiboot编译方法，实验方法.txt中 （a.img是已经完成大镜像）
+2。makefile提供 自动化生成kernel.img
+3。本例提供bochs配置文件，如果你的环境是linux +bochs+gcc+nasm 直接 make go
+4。实体机器实验非常容易，前提是得有grub
+
+
+
+
+3.代码结构
+
+    /boot/boot.asm 
+	
+	call	---->/KERNEL/XX.C(保存multiboot返回的信息)
+	xx	 <---
+	call	--->/kernel/xxx.c(初始化IDT.GDT)
+	xx	<----
+	call/jmp->>>........xxxx	
+		
+	hlt
+
+
+
+
