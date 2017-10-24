@@ -1,37 +1,8 @@
-## Welcome to GitHub Pages
+#Controller
 
-You can use the [editor on GitHub](https://github.com/JamesLinus/HappyFanky/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
-
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/JamesLinus/HappyFanky/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+<h3>1、什么是multiboot</h3>
+multiboot是32位的多系统启动的规范，只要是符合multiboot specification的内核，就能够在Loader支持的文件档案系统内加载内核并启动内核。
+<h3>2、为什么要遵守multiboot</h3>
+内核遵守multiboot specification带来的好处是利于我们将关注点集中在内核及之上的内容，我们不必处理实模式->保护模式切换、不必过早地涉及文件系统问题（我认为除非一直用别人的文件系统，否则过早地涉及文件系统无意义），同时利于多系统的并存。在我们的系统构建初期，不可避免地会依赖于现存的文件系统，所以完全可以借助符合multiboot规范的bootloader工具（如grub、grub2）去加载我们的内核。
+<h3>3、我们一直要用第三方bootloader吗</h3>
+对于这个问题，我的观念是：我们要有自己的bootloader，一是我们很有可能会有自己的文件系统，这样第三方bootloader只能相当于一个中转工具，来加载我们的bootloader，实现在我们自有的文件系统中加载内核，这时使用第三方bootloader只是给用户的一个自由的选择；二是现在的multiboot并不能说很好用，他也存在一些问题，例如对文件系统的依赖。
